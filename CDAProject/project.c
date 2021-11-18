@@ -9,10 +9,19 @@ void ALU(unsigned A,unsigned B,char ALUControl,unsigned *ALUresult,char *Zero)
 }
 
 /* instruction fetch */
+/* Joshua Sipos */
 /* 10 Points */
 int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
 {
-
+    //The if Statement satisfies the second halt condition, meaning that if the Program Counter isn't
+	//"word-aligned"/divisble by 4, the halt condtion returns true
+    if(PC % 4 == 0){
+		//Offset Field is shifted by 2 bytes in order to get next instruction
+        *instruction = Mem[PC>>2]; 
+        return 0;
+    }
+    return 1;
+	
 }
 
 
