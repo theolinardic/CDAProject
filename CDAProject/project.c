@@ -16,7 +16,7 @@ int instruction_fetch(unsigned PC,unsigned *Mem,unsigned *instruction)
     //The if Statement satisfies the second halt condition, meaning that if the Program Counter isn't
 	//"word-aligned"/divisble by 4, the halt condtion returns true
     if(PC % 4 == 0){
-		//Offset Field is shifted by 2 bytes in order to get next instruction
+		//Shifted by 2 bytes in order to get next instruction as seen in the FAQ
         *instruction = Mem[PC>>2]; 
         return 0;
     }
@@ -36,8 +36,116 @@ void instruction_partition(unsigned instruction, unsigned *op, unsigned *r1,unsi
 
 /* instruction decode */
 /* 15 Points */
+/*Joshua Sipos*/
 int instruction_decode(unsigned op,struct_controls *controls)
 {
+    //Look at the chart for coespondesnses for instruction decode
+    switch (op)
+    {
+    case 0: //R type instruction decode
+        controls->RegDst = 1;
+        controls->RegWrite = 1;
+        controls->ALUOp = 7;
+        controls->ALUSrc = 0;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 0;
+        controls->MemWrite = 0;
+        break;
+    case 2: //Decoding for jump
+        controls->RegDst = 0;
+        controls->RegWrite = 0;
+        controls->ALUOp = 0;
+        controls->ALUSrc = 0;
+        controls->Jump = 1;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 0;
+        controls->MemWrite = 0;
+        break;
+    case 4://Decode for beq
+        controls->RegDst = 2;
+        controls->RegWrite = 0;
+        controls->ALUOp = 1;
+        controls->ALUSrc = 0;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 1;
+        controls->MemtoReg = 2;
+        controls->MemWrite = 0;
+        break;
+    case 8: //Decode for Addi
+        controls->RegDst = 0;
+        controls->RegWrite = 1;
+        controls->ALUOp = 0;
+        controls->ALUSrc = 1;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 0;
+        controls->MemWrite = 0;
+        break;
+    case 10: //decode for stli
+        controls->RegDst = 0;
+        controls->RegWrite = 1;
+        controls->ALUOp = 2;
+        controls->ALUSrc = 1;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 0;
+        controls->MemWrite = 0;
+        break;
+    case 11: //decode stliu
+        controls->RegDst = 0;
+        controls->RegWrite = 1;
+        controls->ALUOp = 3;
+        controls->ALUSrc = 1;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 0;
+        controls->MemWrite = 0;
+        break;
+
+    case 15: //decode for li
+        controls->RegDst = 0;
+        controls->RegWrite = 1;
+        controls->ALUOp = 6;
+        controls->ALUSrc = 1;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 0;
+        controls->MemWrite = 0;
+        break;
+    case 35: //decode for lw
+        controls->RegDst = 0;
+        controls->RegWrite = 1;
+        controls->ALUOp = 0;
+        controls->ALUSrc = 1;
+        controls->Jump = 0;
+        controls->MemRead = 1; 
+        controls->Branch = 0;
+        controls->MemtoReg = 1;
+        controls->MemWrite = 0;
+        break;
+    case 43: // decode for sw
+        controls->RegDst = 2;
+        controls->RegWrite = 0;
+        controls->ALUOp = 0;
+        controls->ALUSrc = 1;
+        controls->Jump = 0;
+        controls->MemRead = 0; 
+        controls->Branch = 0;
+        controls->MemtoReg = 2;
+        controls->MemWrite = 1;
+        break;
+    default: // default to 1 for halt boolean
+        return 1;
+    }
+    return 0;
 
 }
 
@@ -79,9 +187,23 @@ void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,
 }
 
 /* PC update */
+/*Joshua Sipos*/
 /* 10 Points */
 void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char Zero,unsigned *PC)
-{
+{  
+    //Since the end of the cycle has been reached, the program counter is updated by 4
+    *PC+=4;
 
+    //If a jump instruction is sent, PC gets updated by 4, which was done in the line above, then the upper 4 bits gets concated with the offset twice
+    //shifted. Use the OR operator
+    if(Jump == 1){
+        *PC = (jsec << 2) | (*PC | 0xf0000000);
+    }
+    //Check the zero output to make sure that t1 and t2 are the same. So we can branch PC + 4 +4 *(Offset). PC+4 has already been achieved so 4 has to be
+    //added again and multiupled by the extended value shifted twice
+    if(Branch == 1 && Zero){
+        *PC += (extended_value << 2);
+    }
+    
 }
 
