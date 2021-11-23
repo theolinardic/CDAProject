@@ -156,11 +156,20 @@ void read_register(unsigned r1,unsigned r2,unsigned *Reg,unsigned *data1,unsigne
 
 }
 
-
+//Joshua Sipos
 /* Sign Extend */
 /* 10 Points */
 void sign_extend(unsigned offset,unsigned *extended_value)
 {
+    //16th bit is signed bit 
+    if((offset >> 15) == 1){
+        //If the constant is negative, fill it with 1s
+        *extended_value = offset | 0xffff0000;
+    }
+    //Else, fill it with 0s
+    else{
+        *extended_value = offset & 0x0000ffff;
+    }
 
 }
 
@@ -178,11 +187,32 @@ int rw_memory(unsigned ALUresult,unsigned data2,char MemWrite,char MemRead,unsig
 
 }
 
-
+//Joshua Sipos
 /* Write Register */
 /* 10 Points */
 void write_register(unsigned r2,unsigned r3,unsigned memdata,unsigned ALUresult,char RegWrite,char RegDst,char MemtoReg,unsigned *Reg)
 {
+    //If regwrite == 1, it means info is being wrtien to a reg
+    if(RegWrite == 1){
+        //If memtoreg is 1, it means the info is coming from the memory
+        if(MemtoReg == 1){
+            //write reg to mem
+            Reg[r2] = memdata;
+        }
+        //If memto reg is zero, that means info arrives from the reg
+        else if (MemtoReg == 0)
+        {
+            //if regdest is 1, r-type. Write to r3
+            if(RegDst == 1){
+                Reg[r3] = ALUresult;
+            }
+            //Else 0, I-type, r2
+            else{
+                Reg[r2] = ALUresult;
+            }
+        }
+        
+    }
 
 }
 
@@ -197,7 +227,7 @@ void PC_update(unsigned jsec,unsigned extended_value,char Branch,char Jump,char 
     //If a jump instruction is sent, PC gets updated by 4, which was done in the line above, then the upper 4 bits gets concated with the offset twice
     //shifted. Use the OR operator
     if(Jump == 1){
-        *PC = (jsec << 2) | (*PC | 0xf0000000);
+        *PC = (jsec << 2) | (*PC & 0xf0000000);
     }
     //Check the zero output to make sure that t1 and t2 are the same. So we can branch PC + 4 +4 *(Offset). PC+4 has already been achieved so 4 has to be
     //added again and multiupled by the extended value shifted twice
